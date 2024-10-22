@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+aiohttp
+opencv-python
+pinecone
+python-multipart
+python-dotenv
