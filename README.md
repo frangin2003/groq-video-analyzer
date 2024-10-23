@@ -86,7 +86,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 ## Backend
 
-To run the backend, navigate to the backend directory and run `uvicorn main:app --host 0.0.0.0 --port 8000 --reload`.
+To run the backend, run `uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload` at the root directory.
 
 
 ## Video Attributions
