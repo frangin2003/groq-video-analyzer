@@ -153,38 +153,42 @@ const App = () => {
 
   const handleExtract = async (sequence) => {
     try {
-      // Show loading state if needed
-      const response = await fetch('http://localhost:8000/extract_sequence', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          video_path: sequence.video_path,
-          time_start: sequence.time_start,
-          time_end: sequence.time_end,
-        }),
-      });
+        // Create query parameters
+        const params = new URLSearchParams({
+            video_path: sequence.video_path,
+            time_start: sequence.time_start,
+            time_end: sequence.time_end
+        });
 
-      if (!response.ok) throw new Error('Extract failed');
+        const response = await fetch(
+            `http://localhost:8000/extract_sequence?${params.toString()}`,
+            {
+                method: 'GET'
+            }
+        );
 
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sequence_${sequence.frame_start}-${sequence.frame_end}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+        if (!response.ok) {
+            console.error('Extract failed:', await response.text());
+            throw new Error('Extract failed');
+        }
+
+        // Get the blob from the response
+        const blob = await response.blob();
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sequence_${sequence.frame_start}-${sequence.frame_end}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     } catch (error) {
-      console.error('Error extracting sequence:', error);
-      alert('Failed to extract sequence. Please try again.');
+        console.error('Error extracting sequence:', error);
+        alert('Failed to extract sequence. Please try again.');
     }
   };
 

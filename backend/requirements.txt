@@ -9,3 +9,4 @@ groq
 transformers
 sentence-transformers
 torch
+pydub
