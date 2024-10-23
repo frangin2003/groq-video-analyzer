@@ -10,9 +10,9 @@ const VideoPlaybackModal = ({ isOpen, onClose, video }) => {
           <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-white">
             <X size={24} />
           </button>
-          <h2 className="text-xl font-bold mb-4 text-purple-300">{video.description}</h2>
+          <h2 className="text-xl font-bold mb-4 text-purple-300"></h2>
           <video
-            src={video.videoUrl}
+            src={`http://localhost:8000/${video.frame_paths[0]}`}
             className="w-full rounded-lg"
             controls
             autoPlay

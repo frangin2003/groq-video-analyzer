@@ -11,6 +11,7 @@ import pinecone
 from typing import Dict, List
 from transformers import AutoModel
 from collections import defaultdict
+from fastapi.staticfiles import StaticFiles
 
 from .video_processing import process_video
 
@@ -121,6 +122,7 @@ async def search_video_sequences(user_query: str):
             'duration': seq['duration'],
             'score': seq['score'],
             'description': seq['description'],
+            'frame_paths': seq['frame_paths'],  # Include ordered frame paths array
             'metadata': {
                 'frames': [f['frame'] for f in seq['frames']],
                 'video_path': seq['video_path']
@@ -139,6 +141,7 @@ def group_frames_into_sequences(matches):
     for match in matches:
         video_groups[match.metadata['video_path']].append({
             'frame': match.metadata['frame_number'],
+            'frame_path': match.metadata['frame_path'],
             'timestamp': match.metadata['timestamp'],
             'metadata': match.metadata,
             'score': float(match.score),
@@ -168,6 +171,7 @@ def group_frames_into_sequences(matches):
                         'time_end': current_sequence[-1]['timestamp'],
                         'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
                         'frames': current_sequence,
+                        'frame_paths': [f['frame_path'] for f in current_sequence],  # Add ordered frame paths
                         'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
                         'description': current_sequence[0]['metadata']['description']
                     })
@@ -183,6 +187,7 @@ def group_frames_into_sequences(matches):
                 'time_end': current_sequence[-1]['timestamp'],
                 'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
                 'frames': current_sequence,
+                'frame_paths': [f['frame_path'] for f in current_sequence],  # Add ordered frame paths
                 'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
                 'description': current_sequence[0]['metadata']['description']
             })
@@ -205,8 +210,13 @@ async def download_sequence(task_id: str, sequence_id: str):
     else:
         return JSONResponse(status_code=404, content={"message": "Sequence not found"})
 
+# Create frames directory if it doesn't exist
+os.makedirs("frames", exist_ok=True)
+
+# Mount the frames directory as a static file directory
+app.mount("/frames", StaticFiles(directory="frames"), name="frames")
+
 # Serve frontend (assuming build is in 'frontend/build')
-from fastapi.staticfiles import StaticFiles
 app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
 
 # Remove the POST endpoint and modify the WebSocket endpoint

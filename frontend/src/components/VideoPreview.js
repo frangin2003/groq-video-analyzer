@@ -1,10 +1,13 @@
 import { Play } from 'lucide-react';
 
 const VideoPreview = ({ result, isCompact, onPlay }) => {
+    // Get the frame path from the first frame in the sequence
+    const framePath = result.frame_paths[0];
+    
     return (
       <div className="relative cursor-pointer" onClick={() => onPlay(result)}>
         <img
-          src={`data:image/jpeg;base64,${result.imageBase64}`}
+          src={`http://localhost:8000/${framePath}`}
           alt="Frame"
           className={`object-cover rounded-lg shadow-md ${isCompact ? 'w-full h-24' : 'w-full h-48'}`}
         />
