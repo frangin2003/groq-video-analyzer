@@ -1,4 +1,3 @@
-
 import { X } from 'lucide-react';
 
 const VideoPlaybackModal = ({ isOpen, onClose, video }) => {
@@ -12,7 +11,7 @@ const VideoPlaybackModal = ({ isOpen, onClose, video }) => {
           </button>
           <h2 className="text-xl font-bold mb-4 text-purple-300"></h2>
           <video
-            src={`http://localhost:8000/${video.frame_paths[0]}`}
+            src={`http://localhost:8000/videos/${video.video_path.split('\\').pop()}`}
             className="w-full rounded-lg"
             controls
             autoPlay

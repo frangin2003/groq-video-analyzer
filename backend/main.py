@@ -210,14 +210,13 @@ async def download_sequence(task_id: str, sequence_id: str):
     else:
         return JSONResponse(status_code=404, content={"message": "Sequence not found"})
 
-# Create frames directory if it doesn't exist
+# Create both frames and videos directories
 os.makedirs("frames", exist_ok=True)
+os.makedirs("videos", exist_ok=True)
 
-# Mount the frames directory as a static file directory
+# Mount both directories as static file directories
 app.mount("/frames", StaticFiles(directory="frames"), name="frames")
-
-# Serve frontend (assuming build is in 'frontend/build')
-app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
+app.mount("/videos", StaticFiles(directory="videos"), name="videos")
 
 # Remove the POST endpoint and modify the WebSocket endpoint
 @app.websocket("/ws/search")

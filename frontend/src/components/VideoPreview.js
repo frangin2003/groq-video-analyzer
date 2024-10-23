@@ -4,8 +4,15 @@ const VideoPreview = ({ result, isCompact, onPlay }) => {
     // Get the frame path from the first frame in the sequence
     const framePath = result.frame_paths[0];
     
+    const handleClick = () => {
+      onPlay({
+        ...result,
+        video_path: result.video_path // This will be used by VideoPlaybackModal
+      });
+    };
+    
     return (
-      <div className="relative cursor-pointer" onClick={() => onPlay(result)}>
+      <div className="relative cursor-pointer" onClick={handleClick}>
         <img
           src={`http://localhost:8000/${framePath}`}
           alt="Frame"
