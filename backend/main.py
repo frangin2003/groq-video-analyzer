@@ -10,6 +10,7 @@ from pinecone import Pinecone
 import pinecone
 from typing import Dict, List
 from transformers import AutoModel
+from collections import defaultdict
 
 from .video_processing import process_video
 
@@ -106,29 +107,89 @@ async def search_video_sequences(user_query: str):
             include_metadata=True
         )
         
-        # Format the results to ensure they're JSON serializable
-        formatted_matches = []
-        for match in result.matches:
-            formatted_match = {
-                "id": match.id,
-                "score": float(match.score),
-                "metadata": {
-                    "description": match.metadata.get("description"),
-                    "frame_number": match.metadata.get("frame_number"),
-                    "frame_path": match.metadata.get("frame_path"),
-                    "task_id": match.metadata.get("task_id"),
-                    "timestamp": match.metadata.get("timestamp"),
-                    "video_path": match.metadata.get("video_path")
-                }
-            }
-            formatted_matches.append(formatted_match)
+        # Group frames into sequences
+        sequences = group_frames_into_sequences(result.matches)
         
-        print(f"🔵 Found {len(formatted_matches)} matches")
-        return {"results": formatted_matches}
+        # Format the sequences for JSON response
+        formatted_sequences = [{
+            'id': idx,
+            'video_path': seq['video_path'],
+            'frame_start': seq['frame_start'],
+            'frame_end': seq['frame_end'],
+            'time_start': seq['time_start'],
+            'time_end': seq['time_end'],
+            'duration': seq['duration'],
+            'score': seq['score'],
+            'description': seq['description'],
+            'metadata': {
+                'frames': [f['frame'] for f in seq['frames']],
+                'video_path': seq['video_path']
+            }
+        } for idx, seq in enumerate(sequences)]
+        
+        return {"results": formatted_sequences}
         
     except Exception as e:
         print(f"🔴 Error in search_video_sequences: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def group_frames_into_sequences(matches):
+    # Group frames by video path
+    video_groups = defaultdict(list)
+    for match in matches:
+        video_groups[match.metadata['video_path']].append({
+            'frame': match.metadata['frame_number'],
+            'timestamp': match.metadata['timestamp'],
+            'metadata': match.metadata,
+            'score': float(match.score),
+            'id': match.id
+        })
+    
+    # Find sequences in each video
+    sequences = []
+    for video_path, frames in video_groups.items():
+        # Sort frames by frame number
+        frames.sort(key=lambda x: x['frame'])
+        
+        current_sequence = [frames[0]]
+        
+        for i in range(1, len(frames)):
+            if frames[i]['frame'] == current_sequence[-1]['frame'] + 1:
+                # Frame is consecutive, add to current sequence
+                current_sequence.append(frames[i])
+            else:
+                # Frame is not consecutive, save current sequence and start new one
+                if len(current_sequence) > 1:  # Only add sequences with more than one frame
+                    sequences.append({
+                        'video_path': video_path,
+                        'frame_start': current_sequence[0]['frame'],
+                        'frame_end': current_sequence[-1]['frame'],
+                        'time_start': current_sequence[0]['timestamp'],
+                        'time_end': current_sequence[-1]['timestamp'],
+                        'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
+                        'frames': current_sequence,
+                        'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
+                        'description': current_sequence[0]['metadata']['description']
+                    })
+                current_sequence = [frames[i]]
+        
+        # Add the last sequence only if it has more than one frame
+        if len(current_sequence) > 1:
+            sequences.append({
+                'video_path': video_path,
+                'frame_start': current_sequence[0]['frame'],
+                'frame_end': current_sequence[-1]['frame'],
+                'time_start': current_sequence[0]['timestamp'],
+                'time_end': current_sequence[-1]['timestamp'],
+                'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
+                'frames': current_sequence,
+                'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
+                'description': current_sequence[0]['metadata']['description']
+            })
+    
+    # Sort sequences by score
+    sequences.sort(key=lambda x: x['score'], reverse=True)
+    return sequences
 
 # Endpoint to download video sequence
 @app.get("/download_sequence/{task_id}/{sequence_id}")

@@ -275,45 +275,45 @@ const App = () => {
 
         <div id="search-results" className="p-4 sm:p-8">
           <div className={`grid gap-8 ${isCompact ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-            {searchResults.map((result) => (
-              <div key={result.id} className={`bg-gray-800 bg-opacity-50 p-4 sm:p-6 rounded-xl shadow-lg hover:bg-gray-800 transform transition-all duration-300 ${isCompact ? 'flex items-center' : 'hover:scale-105'}`}>
-                <VideoPreview result={result} isCompact={isCompact} onPlay={handlePlayVideo} />
+            {searchResults.map((sequence) => (
+              <div key={sequence.id} className={`bg-gray-800 bg-opacity-50 p-4 sm:p-6 rounded-xl shadow-lg hover:bg-gray-800 transform transition-all duration-300 ${isCompact ? 'flex items-center' : 'hover:scale-105'}`}>
+                <VideoPreview result={sequence} isCompact={isCompact} onPlay={handlePlayVideo} />
                 <div className={isCompact ? 'flex-grow ml-4' : 'mt-4'}>
                   <p className={`text-purple-300 ${isCompact ? 'text-sm mb-2' : 'text-lg mb-4'}`}>
-                    {result.metadata.description}
+                    {sequence.description}
                   </p>
                   
                   {/* Metadata information */}
                   <div className={`grid gap-2 mb-4 ${isCompact ? 'text-xs grid-cols-8' : 'text-sm grid-cols-3'}`}>
                     <div className="flex items-center">
                       <Film size={isCompact ? 14 : 16} className="mr-1 text-pink-400" />
-                      <span className="text-gray-300">Frame: </span>
+                      <span className="text-gray-300">Frames: </span>
                       <span className="ml-1 font-semibold whitespace-nowrap">
-                        {result.metadata.frame_number}
+                        {sequence.frame_start}-{sequence.frame_end}
                       </span>
                     </div>
                     <div className="flex items-center">
                       <Clock size={isCompact ? 14 : 16} className="mr-1 text-green-400" />
-                      <span className="text-gray-300">Time: </span>
+                      <span className="text-gray-300">Duration: </span>
                       <span className="ml-1 font-semibold">
-                        {result.metadata.timestamp.toFixed(2)}s
+                        {sequence.duration.toFixed(2)}s
                       </span>
                     </div>
                     <div className={`flex items-center ${isCompact ? 'col-span-2' : ''}`}>
                       <Video size={isCompact ? 14 : 16} className="mr-1 text-purple-400" />
                       <span className="text-gray-300">Video: </span>
                       <span className="ml-1 font-semibold whitespace-nowrap">
-                        {result.metadata.video_path.split('\\').pop()}
+                        {sequence.video_path.split('\\').pop()}
                       </span>
                     </div>
                   </div>
 
                   <NeonButton 
                     className={`flex items-center justify-center ${isCompact ? 'text-sm py-1 px-2' : 'w-full'}`}
-                    onClick={() => handleExtract(result.metadata.task_id, result.metadata.frame_number)}
+                    onClick={() => handleExtract(sequence.metadata.frames)}
                   >
                     <Video className="mr-2" size={isCompact ? 16 : 20} />
-                    Extract
+                    Extract Sequence
                   </NeonButton>
                 </div>
               </div>
