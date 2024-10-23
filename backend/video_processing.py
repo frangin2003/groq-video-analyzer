@@ -65,26 +65,25 @@ async def process_video(task_id: str, video_path: str, pinecone_index: pinecone.
                     embedding_model = AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-en', trust_remote_code=True)
                     frame_description_embedding = embedding_model.encode(frame_description).tolist()
 
-                    metadata = {
-                        "task_id": task_id,
-                        "timestamp": timestamp,
-                        "frame_number": frame_number,
-                        "frame_path": frame_filename,
-                        "video_path": video_path,
-                        "description": frame_description
-                    }
-                    upsert_response = pinecone_index.upsert(
-                        vectors=[{
+                    vectors_to_upsert = []
+                    for frame_number, (embedding, description, frame_path) in enumerate(processed_frames):
+                        metadata = {
+                            "description": description,
+                            "frame_number": frame_number,
+                            "frame_path": frame_path,
+                            "task_id": task_id,
+                            "timestamp": frame_number / fps,  # Convert frame number to seconds
+                            "video_path": video_path
+                        }
+                        
+                        vectors_to_upsert.append({
                             "id": f"{task_id}_frame_{frame_number}",
-                            "values": frame_description_embedding,
+                            "values": embedding,
                             "metadata": metadata
-                        }]
-                    )
-                    print(f"Pinecone upsert response: {upsert_response}")
+                        })
 
-                    processed_frames += 1
-                    progress = int((processed_frames / total_frames) * 100)
-                    await send_progress(task_id, progress, connections=connections)
+                    upsert_response = pinecone_index.upsert(vectors_to_upsert)
+                    print(f"Pinecone upsert response: {upsert_response}")
 
                 except Exception as e:
                     print(f"Error processing frame {frame_number}: {str(e)}")

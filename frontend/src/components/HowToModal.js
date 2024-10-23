@@ -10,7 +10,7 @@ const HowToModal = ({ isOpen, onClose }) => {
             <X size={24} />
           </button>
           <ul className="list-disc list-inside mb-8 text-white space-y-2">
-            <li>📂 Scan folders and videos to extract frames, describe them with AI, and store them in a local database.</li>
+            <li>📂 Analyze videos to extract frames, describe them with AI, and store embeddings in a vector database.</li>
             <li>🔍 Perform natural language searches to find specific sequences across all indexed videos.</li>
             <li>🎬 Extract and utilize video sequences based on your search results.</li>
           </ul>

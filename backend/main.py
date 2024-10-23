@@ -3,12 +3,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import uuid
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pinecone import Pinecone
 import pinecone
 from typing import Dict, List
+from transformers import AutoModel
 
 from .video_processing import process_video
 
@@ -21,6 +22,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:3000",
+    "http://localhost:8000",
     # Add your frontend URL if different
 ]
 
@@ -81,6 +83,53 @@ async def upload_video(file: UploadFile = File(...), background_tasks: Backgroun
 
     return {"task_id": task_id}
 
+# Upload endpoint
+@app.post("/search_video_sequences/{user_query}")
+async def search_video_sequences(user_query: str):
+    try:
+        print("🔵 Starting search for query:", user_query)
+        
+        # Load embedding model
+        print("🔵 Loading embedding model")
+        embedding_model = AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-en', trust_remote_code=True)
+        
+        # Generate embeddings
+        print("🔵 Generating embeddings")
+        user_query_embedding = embedding_model.encode(user_query).tolist()
+        
+        # Query Pinecone
+        print("🔵 Querying Pinecone")
+        result = pinecone_index.query(
+            vector=user_query_embedding,
+            top_k=5,
+            include_values=False,
+            include_metadata=True
+        )
+        
+        # Format the results to ensure they're JSON serializable
+        formatted_matches = []
+        for match in result.matches:
+            formatted_match = {
+                "id": match.id,
+                "score": float(match.score),
+                "metadata": {
+                    "description": match.metadata.get("description"),
+                    "frame_number": match.metadata.get("frame_number"),
+                    "frame_path": match.metadata.get("frame_path"),
+                    "task_id": match.metadata.get("task_id"),
+                    "timestamp": match.metadata.get("timestamp"),
+                    "video_path": match.metadata.get("video_path")
+                }
+            }
+            formatted_matches.append(formatted_match)
+        
+        print(f"🔵 Found {len(formatted_matches)} matches")
+        return {"results": formatted_matches}
+        
+    except Exception as e:
+        print(f"🔴 Error in search_video_sequences: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Endpoint to download video sequence
 @app.get("/download_sequence/{task_id}/{sequence_id}")
 async def download_sequence(task_id: str, sequence_id: str):
@@ -98,3 +147,72 @@ async def download_sequence(task_id: str, sequence_id: str):
 # Serve frontend (assuming build is in 'frontend/build')
 from fastapi.staticfiles import StaticFiles
 app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
+
+# Remove the POST endpoint and modify the WebSocket endpoint
+@app.websocket("/ws/search")
+async def websocket_search_endpoint(websocket: WebSocket):
+    print("🔵 WebSocket connection initiated")
+    try:
+        await websocket.accept()
+        print("🔵 WebSocket connection accepted")
+        
+        while True:
+            try:
+                print("🔵 Waiting for message...")
+                data = await websocket.receive_json()
+                print(f"🔵 Received data: {data}")
+                
+                query = data.get('query')
+                print(f"🔵 Extracted query: {query}")
+                
+                if query:
+                    try:
+                        task_id = str(uuid.uuid4())
+                        print(f"🔵 Generated task_id: {task_id}")
+                        connections[task_id] = websocket
+                        print(f"🔵 Stored WebSocket connection for task_id: {task_id}")
+                        
+                        print("🔵 Creating background task")
+                        background_tasks = BackgroundTasks()
+                        background_tasks.add_task(
+                            search_video_sequences, 
+                            task_id,
+                            query, 
+                            pinecone_index, 
+                            connections
+                        )
+                        print("🔵 Added search task to background tasks")
+                        
+                        print("🔵 Executing background tasks")
+                        await background_tasks()
+                        print("🔵 Background tasks execution completed")
+                    except Exception as e:
+                        print(f"🔴 Error processing query: {str(e)}")
+                        print(f"🔴 Error type: {type(e)}")
+                        import traceback
+                        print(f"🔴 Traceback: {traceback.format_exc()}")
+                        await websocket.send_json({
+                            "error": str(e)
+                        })
+                else:
+                    print("🔴 No query in received data")
+                    await websocket.send_json({
+                        "error": "No query provided"
+                    })
+                    
+            except Exception as e:
+                print(f"🔴 Error receiving message: {str(e)}")
+                print(f"🔴 Error type: {type(e)}")
+                import traceback
+                print(f"🔴 Traceback: {traceback.format_exc()}")
+                break
+                
+    except WebSocketDisconnect:
+        print("🔵 WebSocket disconnected")
+    except Exception as e:
+        print(f"🔴 Unexpected error: {str(e)}")
+        print(f"🔴 Error type: {type(e)}")
+        import traceback
+        print(f"🔴 Traceback: {traceback.format_exc()}")
+    finally:
+        print("🔵 WebSocket connection handling complete")
