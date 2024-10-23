@@ -6,3 +6,6 @@ pinecone
 python-multipart
 python-dotenv
 groq
+transformers
+sentence-transformers
+torch

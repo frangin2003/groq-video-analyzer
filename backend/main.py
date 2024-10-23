@@ -1,5 +1,7 @@
-# backend/main.py
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 import uuid
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, FileResponse
@@ -7,10 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pinecone import Pinecone
 import pinecone
 from typing import Dict, List
-from dotenv import load_dotenv
-from video_processing import process_video
 
-load_dotenv()
+from .video_processing import process_video
+
+
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -46,7 +48,7 @@ if INDEX_NAME not in pc.list_indexes().names():
         )
     )
 
-index = pc.Index(INDEX_NAME)
+pinecone_index = pc.Index(INDEX_NAME)
 
 # Dictionary to hold WebSocket connections
 connections: Dict[str, WebSocket] = {}
@@ -75,7 +77,7 @@ async def upload_video(file: UploadFile = File(...), background_tasks: Backgroun
         f.write(await file.read())
 
     # Start background task
-    background_tasks.add_task(process_video, task_id, video_path, index)
+    background_tasks.add_task(process_video, task_id, video_path, pinecone_index, connections)
 
     return {"task_id": task_id}
 
@@ -95,4 +97,4 @@ async def download_sequence(task_id: str, sequence_id: str):
 
 # Serve frontend (assuming build is in 'frontend/build')
 from fastapi.staticfiles import StaticFiles
-app.mount("/", StaticFiles(directory="../frontend/build", html=True), name="frontend")
+app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
