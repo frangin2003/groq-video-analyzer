@@ -163,15 +163,19 @@ def group_frames_into_sequences(matches):
             else:
                 # Frame is not consecutive, save current sequence and start new one
                 if len(current_sequence) > 1:  # Only add sequences with more than one frame
+                    start_time = current_sequence[0]['timestamp']
+                    end_time = current_sequence[-1]['timestamp']
                     sequences.append({
                         'video_path': video_path,
                         'frame_start': current_sequence[0]['frame'],
                         'frame_end': current_sequence[-1]['frame'],
-                        'time_start': current_sequence[0]['timestamp'],
-                        'time_end': current_sequence[-1]['timestamp'],
-                        'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
+                        'time_start': start_time,
+                        'time_end': end_time,
+                        'time_start_formatted': format_timestamp(start_time),
+                        'time_end_formatted': format_timestamp(end_time),
+                        'duration': end_time - start_time,
                         'frames': current_sequence,
-                        'frame_paths': [f['frame_path'] for f in current_sequence],  # Add ordered frame paths
+                        'frame_paths': [f['frame_path'] for f in current_sequence],
                         'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
                         'description': current_sequence[0]['metadata']['description']
                     })
@@ -179,15 +183,19 @@ def group_frames_into_sequences(matches):
         
         # Add the last sequence only if it has more than one frame
         if len(current_sequence) > 1:
+            start_time = current_sequence[0]['timestamp']
+            end_time = current_sequence[-1]['timestamp']
             sequences.append({
                 'video_path': video_path,
                 'frame_start': current_sequence[0]['frame'],
                 'frame_end': current_sequence[-1]['frame'],
-                'time_start': current_sequence[0]['timestamp'],
-                'time_end': current_sequence[-1]['timestamp'],
-                'duration': current_sequence[-1]['timestamp'] - current_sequence[0]['timestamp'],
+                'time_start': start_time,
+                'time_end': end_time,
+                'time_start_formatted': format_timestamp(start_time),
+                'time_end_formatted': format_timestamp(end_time),
+                'duration': end_time - start_time,
                 'frames': current_sequence,
-                'frame_paths': [f['frame_path'] for f in current_sequence],  # Add ordered frame paths
+                'frame_paths': [f['frame_path'] for f in current_sequence],
                 'score': sum(f['score'] for f in current_sequence) / len(current_sequence),
                 'description': current_sequence[0]['metadata']['description']
             })
@@ -195,6 +203,12 @@ def group_frames_into_sequences(matches):
     # Sort sequences by score
     sequences.sort(key=lambda x: x['score'], reverse=True)
     return sequences
+
+def format_timestamp(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 # Endpoint to download video sequence
 @app.get("/download_sequence/{task_id}/{sequence_id}")

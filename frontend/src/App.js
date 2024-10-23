@@ -294,6 +294,13 @@ const App = () => {
                     </div>
                     <div className="flex items-center">
                       <Clock size={isCompact ? 14 : 16} className="mr-1 text-green-400" />
+                      <span className="text-gray-300">Time: </span>
+                      <span className="ml-1 font-semibold">
+                        {sequence.time_start.toFixed(2)}s - {sequence.time_end.toFixed(2)}s
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock size={isCompact ? 14 : 16} className="mr-1 text-green-400" />
                       <span className="text-gray-300">Duration: </span>
                       <span className="ml-1 font-semibold">
                         {sequence.duration.toFixed(2)}s
