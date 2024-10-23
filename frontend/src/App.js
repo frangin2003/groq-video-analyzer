@@ -151,13 +151,37 @@ const App = () => {
     multiple: false
   });
 
-  const handleExtract = async (taskId, frameNumber) => {
+  const handleExtract = async (sequence) => {
     try {
-      const response = await fetch(`http://localhost:8000/extract_sequence/${taskId}/${frameNumber}`, {
+      // Show loading state if needed
+      const response = await fetch('http://localhost:8000/extract_sequence', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          video_path: sequence.video_path,
+          time_start: sequence.time_start,
+          time_end: sequence.time_end,
+        }),
       });
+
       if (!response.ok) throw new Error('Extract failed');
-      // Optional: Add success feedback here
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sequence_${sequence.frame_start}-${sequence.frame_end}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Error extracting sequence:', error);
       alert('Failed to extract sequence. Please try again.');
@@ -317,7 +341,7 @@ const App = () => {
 
                   <NeonButton 
                     className={`flex items-center justify-center ${isCompact ? 'text-sm py-1 px-2' : 'w-full'}`}
-                    onClick={() => handleExtract(sequence.metadata.frames)}
+                    onClick={() => handleExtract(sequence)}
                   >
                     <Video className="mr-2" size={isCompact ? 16 : 20} />
                     Extract Sequence

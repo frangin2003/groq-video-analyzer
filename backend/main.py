@@ -4,7 +4,7 @@ load_dotenv()
 
 import uuid
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pinecone import Pinecone
 import pinecone
@@ -12,6 +12,9 @@ from typing import Dict, List
 from transformers import AutoModel
 from collections import defaultdict
 from fastapi.staticfiles import StaticFiles
+import cv2
+import tempfile
+from typing import Dict
 
 from .video_processing import process_video
 
@@ -300,3 +303,69 @@ async def websocket_search_endpoint(websocket: WebSocket):
         print(f"🔴 Traceback: {traceback.format_exc()}")
     finally:
         print("🔵 WebSocket connection handling complete")
+
+@app.post("/extract_sequence")
+async def extract_sequence(request: Dict):
+    try:
+        video_path = request["video_path"]
+        time_start = float(request["time_start"])
+        time_end = float(request["time_end"])
+        
+        # Open the video file
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise HTTPException(status_code=500, detail="Could not open video file")
+            
+        # Get video properties
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        # Calculate start and end frames
+        start_frame = int(time_start * fps)
+        end_frame = int(time_end * fps)
+        
+        # Create temporary output file
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
+            output_path = temp_file.name
+            
+            # Create VideoWriter object
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
+            
+            # Set frame position to start_frame
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            
+            # Read and write frames
+            current_frame = start_frame
+            while current_frame <= end_frame:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                    
+                out.write(frame)
+                current_frame += 1
+            
+            # Release everything
+            cap.release()
+            out.release()
+            
+            # Return the video file as a streaming response
+            def iterfile():
+                with open(output_path, 'rb') as f:
+                    yield from f
+                
+                # Cleanup temp file
+                os.unlink(output_path)
+            
+            return StreamingResponse(
+                iterfile(),
+                media_type='video/mp4',
+                headers={
+                    'Content-Disposition': f'attachment; filename="sequence_{time_start:.2f}-{time_end:.2f}.mp4"'
+                }
+            )
+            
+    except Exception as e:
+        print(f"Error extracting sequence: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
