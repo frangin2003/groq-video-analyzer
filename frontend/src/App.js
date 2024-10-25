@@ -25,7 +25,7 @@ import { imageBase64 } from './imagebase64';
 const searchVideoSequences = async (query) => {
   try {
     console.log("🟡 Making API call to search sequences...");
-    const response = await fetch(`http://localhost:8000/search_video_sequences/${encodeURIComponent(query)}`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/search_video_sequences/${encodeURIComponent(query)}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ const App = () => {
         });
 
         const response = await fetch(
-            `http://localhost:8000/extract_sequence?${params.toString()}`,
+            `${process.env.REACT_APP_API_URL}/extract_sequence?${params.toString()}`,
             {
                 method: 'GET'
             }

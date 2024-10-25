@@ -34,7 +34,7 @@ origins = [
     "http://localhost",
     "http://localhost:3000",
     "http://localhost:8000",
-    # Add your frontend URL if different
+    "https://*.repl.co",  # Allow Replit domains
 ]
 
 app.add_middleware(
@@ -490,4 +490,5 @@ async def debug_routes():
         }
         routes.append(route_info)
     return {"routes": routes}
+
 

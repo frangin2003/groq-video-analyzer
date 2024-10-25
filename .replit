@@ -1,0 +1,9 @@
+run = "python main.py"
+entrypoint = "main.py"
+
+[nix]
+channel = "stable-22_11"
+
+[deployment]
+run = ["sh", "-c", "python main.py"]
+deploymentTarget = "cloudrun"
