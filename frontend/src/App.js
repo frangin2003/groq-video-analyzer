@@ -7,20 +7,6 @@ import VideoPlaybackModal from './components/VideoPlaybackModal';
 import ResultViewsSwitch from './components/ResultViewsSwitch';
 import HowToModal from './components/HowToModal';
 import NeonButton from './components/NeonButton';
-import { imageBase64 } from './imagebase64';
-
-// const searchVideoSequences = async (query) => {
-//   console.log('Searching for:', query);
-//   await new Promise(resolve => setTimeout(resolve, 500));
-//   return [
-//     { id: 1, imageBase64: imageBase64, frameStart: 255, frameEnd: 300, timeStartMs: 1001, timeEndMs: 2001, durationMs: 1000, videoUrl: 'https://example.com/video1.mp4', description: 'A person walking in a neon-lit street, surrounded by the vibrant glow of neon signs and the bustling atmosphere of a futuristic city. The scene captures the essence of a cyberpunk world, with reflections of neon lights on wet pavement and the distant hum of technology in the background. The person\'s silhouette is highlighted by the colorful lights, creating a striking contrast against the dark surroundings. This sequence offers a glimpse into a world where technology and urban life are intertwined, creating a visually stunning and immersive experience.' },
-//     { id: 2, imageBase64: imageBase64, frameStart: 300, frameEnd: 350, timeStartMs: 2002, timeEndMs: 3000, durationMs: 998, videoUrl: 'https://example.com/video1.mp4', description: 'A futuristic car zooming through a cyberpunk city, navigating the neon-lit streets with incredible speed and precision. The car\'s sleek design and advanced technology are on full display as it weaves through traffic, leaving a trail of light in its wake. The cityscape is a dazzling array of towering skyscrapers, holographic advertisements, and bustling crowds, all bathed in the glow of neon lights. This sequence captures the thrill and excitement of a high-speed chase in a world where technology reigns supreme, offering a breathtaking view of a future metropolis.' },
-//     { id: 3, imageBase64: imageBase64, frameStart: 322, frameEnd: 350, timeStartMs: 2520, timeEndMs: 3500, durationMs: 980, videoUrl: 'https://example.com/video1.mp4', description: 'A holographic dog playing in a virtual park, showcasing the seamless integration of augmented reality into everyday life. The dog, rendered in stunning detail, interacts with its environment and other virtual elements, creating a lifelike and engaging experience. The park itself is a blend of natural beauty and digital enhancements, with holographic trees, flowers, and playground equipment. This sequence highlights the potential of augmented reality to transform our surroundings and create new forms of entertainment and interaction, blurring the lines between the real and the virtual.' },
-//     { id: 4, imageBase64: imageBase64, frameStart: 23, frameEnd: 50, timeStartMs: 3000, timeEndMs: 3500, durationMs: 500, videoUrl: 'https://example.com/video2.mp4', description: 'A neon sign flickering in the rain, casting a moody and atmospheric glow over the scene. The sign, with its vibrant colors and intricate design, stands out against the dark, rainy backdrop. Raindrops create ripples on the ground, reflecting the neon lights and adding to the overall ambiance. This sequence captures the essence of a rainy night in a cyberpunk city, where the interplay of light and shadow creates a visually captivating and immersive experience. The flickering sign adds an element of mystery and intrigue, drawing the viewer\'s attention and setting the tone for the scene.' },
-//     { id: 5, imageBase64: imageBase64, frameStart: 566, frameEnd: 600, timeStartMs: 3500, timeEndMs: 4000, durationMs: 500, videoUrl: 'https://example.com/video2.mp4', description: 'A drone flying through a futuristic cityscape, capturing breathtaking aerial views of the neon-lit metropolis below. The drone\'s smooth and agile movements allow it to navigate the complex urban environment with ease, providing a unique perspective on the city\'s architecture and layout. Skyscrapers, bridges, and streets are all illuminated by the vibrant glow of neon lights, creating a stunning visual spectacle. This sequence showcases the potential of drone technology to explore and document our surroundings, offering a bird\'s-eye view of a world where technology and urban life are seamlessly integrated.' },
-//     { id: 6, imageBase64: imageBase64, frameStart: 1024, frameEnd: 1200, timeStartMs: 4000, timeEndMs: 5000, durationMs: 1000, videoUrl: 'https://example.com/video3.mp4', description: 'A holographic concert in a virtual arena, featuring a dazzling display of lights, music, and digital effects. The performers, rendered in stunning detail, interact with the audience and the virtual environment, creating an immersive and unforgettable experience. The arena itself is a marvel of digital design, with holographic screens, dynamic lighting, and interactive elements that respond to the music. This sequence captures the excitement and energy of a live concert, enhanced by the limitless possibilities of virtual reality. It offers a glimpse into the future of entertainment, where technology can create new and innovative ways to experience music and performance.' },
-//   ];
-// };
 
 const searchVideoSequences = async (query) => {
   try {
@@ -304,11 +290,15 @@ const App = () => {
         <div id="search-results" className="p-4 sm:p-8">
           <div className={`grid gap-8 ${isCompact ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
             {searchResults.map((sequence) => (
-              <div key={sequence.id} className={`bg-gray-800 bg-opacity-50 p-4 sm:p-6 rounded-xl shadow-lg hover:bg-gray-800 transform transition-all duration-300 ${isCompact ? 'flex items-center' : 'hover:scale-105'}`}>
-                <VideoPreview result={sequence} isCompact={isCompact} onPlay={handlePlayVideo} />
-                <div className={isCompact ? 'flex-grow ml-4' : 'mt-4'}>
-                  <p className={`text-purple-300 ${isCompact ? 'text-sm mb-2' : 'text-lg mb-4'}`}>
-                    {sequence.description}
+              <div key={sequence.id} className={`bg-gray-800 bg-opacity-50 p-4 sm:p-6 rounded-xl shadow-lg hover:bg-gray-800 transform transition-all duration-300 ${isCompact ? 'flex items-start gap-4' : 'hover:scale-105'}`}>
+                <div className={`${isCompact ? 'w-[300px] flex-shrink-0' : ''}`}>
+                  <VideoPreview result={sequence} isCompact={isCompact} onPlay={handlePlayVideo} />
+                </div>
+                <div className={isCompact ? 'flex-grow' : 'mt-4'}>
+                  <p className={`text-purple-300 ${isCompact ? 'text-sm mb-2' : 'text-lg mb-4'} line-clamp-2`}>
+                    {sequence.description.length > 250 
+                      ? `${sequence.description.substring(0, 250)}...` 
+                      : sequence.description}
                   </p>
                   
                   {/* Metadata information */}
@@ -393,6 +383,13 @@ const App = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: linear-gradient(to bottom, #9C4FFF, #FF2D92);
+        }
+        /* Add this new style for text truncation */
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </div>

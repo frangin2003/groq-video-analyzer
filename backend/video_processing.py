@@ -21,9 +21,11 @@ async def process_video(task_id: str, video_path: str, pinecone_index: pinecone.
         total_frames = frame_count // frame_interval
 
         frame_number = 0
-        processed_frames = 0
+        processed_frames = []  # Initialize as list to collect frames
 
         client = Groq()
+        # Load embedding model once outside the loop
+        embedding_model = AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-en', trust_remote_code=True)
 
         async with aiohttp.ClientSession() as session:
             while frame_number * frame_interval < frame_count:
@@ -43,8 +45,8 @@ async def process_video(task_id: str, video_path: str, pinecone_index: pinecone.
                 with open(frame_filename, "rb") as image_file:
                     encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
-                # Call GROQ API to describe image
                 try:
+                    # Get frame description from GROQ
                     completion = client.chat.completions.create(
                         model="llama-3.2-11b-vision-preview",
                         messages=[
@@ -61,32 +63,36 @@ async def process_video(task_id: str, video_path: str, pinecone_index: pinecone.
                     frame_description = completion.choices[0].message.content
                     print(f"Frame {frame_number} description: {frame_description[:100]}...")
 
-                    # Generate embedding and insert into Pinecone
-                    embedding_model = AutoModel.from_pretrained('jinaai/jina-embeddings-v2-base-en', trust_remote_code=True)
+                    # Generate embedding
                     frame_description_embedding = embedding_model.encode(frame_description).tolist()
 
-                    vectors_to_upsert = []
-                    for frame_number, (embedding, description, frame_path) in enumerate(processed_frames):
-                        metadata = {
-                            "description": description,
-                            "frame_number": frame_number,
-                            "frame_path": frame_path,
-                            "task_id": task_id,
-                            "timestamp": frame_number / fps,  # Convert frame number to seconds
-                            "video_path": video_path
-                        }
-                        
-                        vectors_to_upsert.append({
+                    # Create metadata for this frame
+                    metadata = {
+                        "description": frame_description,
+                        "frame_number": frame_number,
+                        "frame_path": frame_filename,
+                        "task_id": task_id,
+                        "timestamp": timestamp,
+                        "video_path": video_path
+                    }
+                    
+                    # Upsert single vector immediately
+                    upsert_response = pinecone_index.upsert(
+                        vectors=[{
                             "id": f"{task_id}_frame_{frame_number}",
-                            "values": embedding,
+                            "values": frame_description_embedding,
                             "metadata": metadata
-                        })
+                        }]
+                    )
+                    print(f"Pinecone upsert response for frame {frame_number}: {upsert_response}")
 
-                    upsert_response = pinecone_index.upsert(vectors_to_upsert)
-                    print(f"Pinecone upsert response: {upsert_response}")
+                    # Update progress
+                    progress = int((frame_number + 1) / total_frames * 100)
+                    await send_progress(task_id, progress, connections=connections)
 
                 except Exception as e:
                     print(f"Error processing frame {frame_number}: {str(e)}")
+                    continue  # Skip this frame and continue with the next one
 
                 frame_number += 1
                 await asyncio.sleep(0.1)  # Add a small delay to prevent overwhelming the system

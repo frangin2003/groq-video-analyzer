@@ -21,6 +21,11 @@ import subprocess
 from pydantic import BaseModel
 from fastapi.exceptions import RequestValidationError
 import urllib.parse
+import numpy as np
+from scipy.io import wavfile
+from scipy.signal import resample
+import soundfile as sf
+from moviepy.editor import VideoFileClip
 
 from .video_processing import process_video
 
@@ -67,7 +72,7 @@ pinecone_index = pc.Index(INDEX_NAME)
 connections: Dict[str, WebSocket] = {}
 
 # WebSocket endpoint for progress updates
-@app.websocket("/ws/{task_id}")
+@app.websocket("/api/ws/{task_id}")
 async def websocket_endpoint(websocket: WebSocket, task_id: str):
     await websocket.accept()
     connections[task_id] = websocket
@@ -80,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
         del connections[task_id]
 
 # Upload endpoint
-@app.post("/upload")
+@app.post("/api/upload")
 async def upload_video(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
     task_id = str(uuid.uuid4())
     video_dir = "videos"
@@ -95,7 +100,7 @@ async def upload_video(file: UploadFile = File(...), background_tasks: Backgroun
     return {"task_id": task_id}
 
 # Upload endpoint
-@app.post("/search_video_sequences/{user_query}")
+@app.post("/api/search_video_sequences/{user_query}")
 async def search_video_sequences(user_query: str):
     try:
         print("🔵 Starting search for query:", user_query)
@@ -219,7 +224,7 @@ def format_timestamp(seconds):
     seconds = int(seconds % 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-@app.get("/extract_sequence")
+@app.get("/api/extract_sequence")
 async def extract_sequence(
     video_path: str,
     time_start: float,
@@ -227,161 +232,62 @@ async def extract_sequence(
 ):
     print("🟢 Extract sequence endpoint called")
     try:
-        print(f"🟢 Received query params:")
-        print(f"🟢 - video_path: {video_path}")
-        print(f"🟢 - time_start: {time_start}")
-        print(f"🟢 - time_end: {time_end}")
-        
-        # URL decode the video path
         video_path = urllib.parse.unquote(video_path)
-        
-        # Normalize the path (convert backslashes to forward slashes)
         video_path = os.path.normpath(video_path).replace('\\', '/')
         
-        print(f"🟢 Processing video: {video_path}")
-        print(f"🟢 Time range: {time_start} - {time_end}")
-        
-        # Create temporary files
-        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as video_temp, \
-             tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as audio_temp, \
-             tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as final_temp:
-             
-            video_output = video_temp.name
-            audio_output = audio_temp.name
-            final_output = final_temp.name
+        # Use a single VideoFileClip for both video and audio
+        try:
+            print("🟢 Loading video with moviepy")
+            video = VideoFileClip(video_path)
             
-            print(f"🟢 Created temp files:")
-            print(f"🟢 - Video: {video_output}")
-            print(f"🟢 - Audio: {audio_output}")
-            print(f"🟢 - Final: {final_output}")
+            # Extract the subclip with both video and audio
+            print(f"🟢 Extracting subclip from {time_start} to {time_end}")
+            clip = video.subclip(time_start, time_end)
             
-            # Extract video using OpenCV
-            cap = cv2.VideoCapture(video_path)
-            if not cap.isOpened():
-                print(f"🔴 Failed to open video file: {video_path}")
-                raise HTTPException(status_code=500, detail="Could not open video file")
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
+                output_path = temp_file.name
                 
-            # Get video properties
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            
-            print(f"🟢 Video properties:")
-            print(f"🟢 - FPS: {fps}")
-            print(f"🟢 - Width: {frame_width}")
-            print(f"🟢 - Height: {frame_height}")
-            
-            # Calculate start and end frames
-            start_frame = int(time_start * fps)
-            end_frame = int(time_end * fps)
-            
-            print(f"🟢 Frame range: {start_frame} - {end_frame}")
-            
-            # Create VideoWriter object
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(video_output, fourcc, fps, (frame_width, frame_height))
-            
-            # Set frame position to start_frame
-            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-            
-            # Read and write frames
-            current_frame = start_frame
-            frames_written = 0
-            while current_frame <= end_frame:
-                ret, frame = cap.read()
-                if not ret:
-                    print(f"🔴 Failed to read frame at position {current_frame}")
-                    break
-                out.write(frame)
-                current_frame += 1
-                frames_written += 1
+                # Write video with audio
+                print("🟢 Writing video with audio")
+                clip.write_videofile(
+                    output_path,
+                    codec='libx264',
+                    audio_codec='aac',
+                    temp_audiofile=None,
+                    remove_temp=True,
+                    logger=None
+                )
                 
-                if frames_written % 30 == 0:  # Log every 30 frames
-                    print(f"🟢 Processed {frames_written} frames")
-            
-            print(f"🟢 Finished writing video frames: {frames_written} total")
-            
-            # Release video resources
-            cap.release()
-            out.release()
-            
-            try:
-                print("🟢 Starting audio extraction")
-                # Extract audio using pydub
-                audio = AudioSegment.from_file(video_path)
+                # Clean up moviepy clips
+                clip.close()
+                video.close()
                 
-                # Convert timestamps to milliseconds
-                start_ms = int(time_start * 1000)
-                end_ms = int(time_end * 1000)
-                
-                print(f"🟢 Audio range: {start_ms}ms - {end_ms}ms")
-                
-                # Extract audio segment
-                audio_segment = audio[start_ms:end_ms]
-                audio_segment.export(audio_output, format="wav")
-                
-                print("🟢 Audio extracted successfully")
-                
-                # Combine video and audio using subprocess
-                cmd = [
-                    'ffmpeg',
-                    '-i', video_output,
-                    '-i', audio_output,
-                    '-c:v', 'copy',
-                    '-c:a', 'aac',
-                    '-strict', 'experimental',
-                    final_output
-                ]
-                print(f"🟢 Running ffmpeg command: {' '.join(cmd)}")
-                subprocess.run(cmd, check=True)
-                print("🟢 Combined video and audio successfully")
-                
-            except Exception as audio_error:
-                print(f"🔴 Audio processing failed: {str(audio_error)}")
-                print("🟡 Falling back to video-only output")
-                final_output = video_output
-            
-            # Return the video file as a streaming response
-            def iterfile():
-                try:
-                    print("🟢 Starting file streaming")
-                    with open(final_output, 'rb') as f:
-                        yield from f
-                    print("🟢 File streaming completed")
-                finally:
-                    print("🟢 Cleaning up temporary files")
-                    # Cleanup temp files
+                def iterfile():
                     try:
-                        os.unlink(video_output)
-                        os.unlink(audio_output)
-                        os.unlink(final_output)
-                        print("🟢 Temporary files cleaned up")
-                    except Exception as cleanup_error:
-                        print(f"🔴 Error during cleanup: {str(cleanup_error)}")
-            
-            print("🟢 Preparing streaming response")
-            return StreamingResponse(
-                iterfile(),
-                media_type='video/mp4',
-                headers={
-                    'Content-Disposition': f'attachment; filename="sequence_{time_start:.2f}-{time_end:.2f}.mp4"'
-                }
-            )
-            
+                        with open(output_path, 'rb') as f:
+                            yield from f
+                    finally:
+                        try:
+                            os.unlink(output_path)
+                        except Exception as cleanup_error:
+                            print(f"🔴 Error during cleanup: {str(cleanup_error)}")
+
+                return StreamingResponse(
+                    iterfile(),
+                    media_type='video/mp4',
+                    headers={
+                        'Content-Disposition': f'attachment; filename="sequence_{time_start:.2f}-{time_end:.2f}.mp4"'
+                    }
+                )
+                
+        except Exception as e:
+            print(f"🔴 Error processing video: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
-        print(f"🔴 Error in extract_sequence:")
-        print(f"🔴 Error type: {type(e)}")
-        print(f"🔴 Error message: {str(e)}")
-        import traceback
-        print(f"🔴 Traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": str(e),
-                "type": str(type(e)),
-                "traceback": traceback.format_exc()
-            }
-        )
+        print(f"🔴 Error in extract_sequence: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 # Create both frames and videos directories
 os.makedirs("frames", exist_ok=True)
@@ -393,7 +299,7 @@ app.mount("/videos", StaticFiles(directory="videos"), name="videos")
 app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
 
 # Remove the POST endpoint and modify the WebSocket endpoint
-@app.websocket("/ws/search")
+@app.websocket("/api/ws/search")
 async def websocket_search_endpoint(websocket: WebSocket):
     print("🔵 WebSocket connection initiated")
     try:
@@ -490,5 +396,9 @@ async def debug_routes():
         }
         routes.append(route_info)
     return {"routes": routes}
+
+
+
+
 
 

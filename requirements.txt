@@ -1,17 +1,17 @@
 fastapi
 uvicorn
 aiohttp
-opencv-python-headless  # Better for deployment than opencv
+opencv-python-headless
 pinecone
-pinecone-client  # Full package name for pinecone
+pinecone-client
 python-multipart
 python-dotenv
 groq
 transformers
 sentence-transformers
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch  # CPU version for deployment
-pydub
-python-jose[cryptography]  # For JWT handling if needed
-requests
-numpy  # Required by transformers and opencv
+torch
+numpy
+scipy
+soundfile
+moviepy
