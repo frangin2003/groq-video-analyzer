@@ -41,7 +41,7 @@ const VideoPlaybackModal = ({ isOpen, onClose, video }) => {
                 <h2 className="text-xl font-bold mb-4 text-purple-300"></h2>
                 <video
                     ref={videoRef}
-                    src={`http://localhost:8000/videos/${video.video_path.split('\\').pop()}`}
+                    src={`/videos/${video.video_path.split('\\').pop()}`}
                     className="w-full rounded-lg"
                     controls
                     autoPlay

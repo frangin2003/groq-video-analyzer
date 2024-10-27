@@ -20,8 +20,14 @@ const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
       formData.append('file', videoFile);
 
       try {
-        const response = await fetch('/upload', {
+        // Get the auth token from localStorage
+        const token = localStorage.getItem('auth_token');
+        
+        const response = await fetch('/api/upload', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,  // Add the auth token
+          },
           body: formData,
         });
 
@@ -31,8 +37,11 @@ const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
 
         const { task_id } = await response.json();
 
-        // Set up WebSocket connection
-        const ws = new WebSocket(`ws://localhost:8000/ws/${task_id}`);
+        // Also add auth token to WebSocket connection
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(
+          `${wsProtocol}//${window.location.host}/api/ws/${task_id}?token=${token}`
+        );
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);

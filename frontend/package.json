@@ -11,6 +11,7 @@
     "groq-vide-name": "file:",
     "groq-video-a": "file:",
     "groq-video-an": "file:",
+    "groq-video-analyzer": "file:",
     "lucide-react": "^0.446.0",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
@@ -18,8 +19,7 @@
     "react-dropzone": "^11.3.4",
     "react-scripts": "5.0.1",
     "tailwindcss": "^3.4.14",
-    "web-vitals": "^2.1.4",
-    "groq-video-analyzer": "file:"
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",

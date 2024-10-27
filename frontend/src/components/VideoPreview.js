@@ -14,7 +14,7 @@ const VideoPreview = ({ result, isCompact, onPlay }) => {
     return (
       <div className="relative cursor-pointer" onClick={handleClick}>
         <img
-          src={`http://localhost:8000/${framePath}`}
+          src={`/${framePath}`}
           alt="Frame"
           className={`object-cover rounded-lg shadow-md ${isCompact ? 'w-full h-24' : 'w-full h-48'}`}
         />

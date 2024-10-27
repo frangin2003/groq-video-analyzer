@@ -11,10 +11,10 @@ import NeonButton from './components/NeonButton';
 const searchVideoSequences = async (query) => {
   try {
     console.log("🟡 Making API call to search sequences...");
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/search_video_sequences/${encodeURIComponent(query)}`, {
-      method: 'POST',
+    const response = await fetch(`/api/search_video_sequences/${encodeURIComponent(query)}`, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
@@ -88,17 +88,126 @@ const App = () => {
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(true);
   const [playbackVideo, setPlaybackVideo] = useState(null);
-  const fileInputRef = useRef(null);
   const [isHowToModalOpen, setIsHowToModalOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleVideoUpload = (event) => {
+  const handleVideoUpload = useCallback((event) => {
     const file = event.target.files[0];
     if (file) {
       setVideoFile(file);
       setIsAnalyzeModalOpen(true);
     }
+  }, []);  // Empty dependencies since it only uses setState functions
+
+  const onDrop = useCallback((acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      handleVideoUpload({ target: { files: [file] } });
+    }
+  }, [handleVideoUpload]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: 'video/*',
+    multiple: false
+  });
+
+  useEffect(() => {
+    // Check if there's an existing auth token
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`/api/auth?password=${encodeURIComponent(password)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+        localStorage.setItem('auth_token', 'authenticated');
+        setError('');
+      } else {
+        setError('Invalid password');
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      setError('Error authenticating. Please try again.');
+    }
   };
+
+  // Move the style useEffect here, before any conditional returns
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .neon-title {
+        background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
+        background-size: 200% 200%;
+        animation: gradientShift 10s ease infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-xl shadow-2xl">
+          <div>
+            <h1 className="text-4xl font-bold text-center neon-title mb-2">
+              SequenceFinder
+            </h1>
+            <h2 className="text-xl text-center text-purple-300">
+              Enter password to continue
+            </h2>
+          </div>
+          <form onSubmit={handleLogin} className="mt-8 space-y-6">
+            <div>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-700 bg-gray-900 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter password"
+              />
+            </div>
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+              Sign in
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const handleSearch = async () => {
     if (searchQuery.trim() === '') return;
@@ -124,19 +233,6 @@ const App = () => {
     setPlaybackVideo(video);
   };
 
-  const onDrop = useCallback((acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      handleVideoUpload({ target: { files: [file] } });
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: 'video/*',
-    multiple: false
-  });
-
   const handleExtract = async (sequence) => {
     try {
         // Create query parameters
@@ -147,7 +243,7 @@ const App = () => {
         });
 
         const response = await fetch(
-            `${process.env.REACT_APP_API_URL}/extract_sequence?${params.toString()}`,
+            `/api/extract_sequence?${params.toString()}`,
             {
                 method: 'GET'
             }
@@ -177,30 +273,6 @@ const App = () => {
         alert('Failed to extract sequence. Please try again.');
     }
   };
-
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      .neon-title {
-        background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
-        background-size: 200% 200%;
-        animation: gradientShift 10s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-      }
-    `;
-    document.head.appendChild(style);
-
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-gray-900 to-black text-white font-sans overflow-hidden">

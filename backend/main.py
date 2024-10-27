@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import uuid
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException, Request, Body, Form
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException, Request, Body, Form, Depends, status
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
@@ -26,6 +26,7 @@ from scipy.io import wavfile
 from scipy.signal import resample
 import soundfile as sf
 from moviepy.editor import VideoFileClip
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .video_processing import process_video
 
@@ -84,9 +85,42 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     except WebSocketDisconnect:
         del connections[task_id]
 
+security = HTTPBearer()
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials.credentials != "authenticated":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return credentials.credentials
+
+@app.get("/debug/routes")
+async def debug_routes():
+    routes = []
+    for route in app.routes:
+        route_info = {
+            "path": route.path,
+            "name": route.name,
+            "methods": getattr(route, "methods", ["WebSocket"]) if not hasattr(route, "methods") else route.methods
+        }
+        routes.append(route_info)
+    return {"routes": routes}
+
+@app.get("/api/auth")
+async def authenticate(password: str):
+    if password == "groq is beautiful":
+        return {"authenticated": True}
+    raise HTTPException(status_code=401, detail="Invalid password")
+
 # Upload endpoint
 @app.post("/api/upload")
-async def upload_video(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
+async def upload_video(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
+    token: str = Depends(verify_token)
+):
     task_id = str(uuid.uuid4())
     video_dir = "videos"
     os.makedirs(video_dir, exist_ok=True)
@@ -100,7 +134,7 @@ async def upload_video(file: UploadFile = File(...), background_tasks: Backgroun
     return {"task_id": task_id}
 
 # Upload endpoint
-@app.post("/api/search_video_sequences/{user_query}")
+@app.get("/api/search_video_sequences/{user_query}")
 async def search_video_sequences(user_query: str):
     try:
         print("🔵 Starting search for query:", user_query)
@@ -136,13 +170,13 @@ async def search_video_sequences(user_query: str):
             'duration': seq['duration'],
             'score': seq['score'],
             'description': seq['description'],
-            'frame_paths': seq['frame_paths'],  # Include ordered frame paths array
+            'frame_paths': seq['frame_paths'],
             'metadata': {
                 'frames': [f['frame'] for f in seq['frames']],
                 'video_path': seq['video_path']
             }
         } for idx, seq in enumerate(sequences)]
-        
+
         return {"results": formatted_sequences}
         
     except Exception as e:
@@ -171,11 +205,12 @@ def group_frames_into_sequences(matches):
         current_sequence = [frames[0]]
         
         for i in range(1, len(frames)):
-            if frames[i]['frame'] == current_sequence[-1]['frame'] + 1:
-                # Frame is consecutive, add to current sequence
+            # Allow for one frame gap (frame difference of 2 or less)
+            if frames[i]['frame'] <= current_sequence[-1]['frame'] + 2:
+                # Frame is consecutive or has one frame gap, add to current sequence
                 current_sequence.append(frames[i])
             else:
-                # Frame is not consecutive, save current sequence and start new one
+                # Frame gap is too large, save current sequence and start new one
                 if len(current_sequence) > 1:  # Only add sequences with more than one frame
                     start_time = current_sequence[0]['timestamp']
                     end_time = current_sequence[-1]['timestamp']
@@ -194,7 +229,7 @@ def group_frames_into_sequences(matches):
                         'description': current_sequence[0]['metadata']['description']
                     })
                 current_sequence = [frames[i]]
-        
+
         # Add the last sequence only if it has more than one frame
         if len(current_sequence) > 1:
             start_time = current_sequence[0]['timestamp']
@@ -298,75 +333,6 @@ app.mount("/frames", StaticFiles(directory="frames"), name="frames")
 app.mount("/videos", StaticFiles(directory="videos"), name="videos")
 app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
 
-# Remove the POST endpoint and modify the WebSocket endpoint
-@app.websocket("/api/ws/search")
-async def websocket_search_endpoint(websocket: WebSocket):
-    print("🔵 WebSocket connection initiated")
-    try:
-        await websocket.accept()
-        print("🔵 WebSocket connection accepted")
-        
-        while True:
-            try:
-                print("🔵 Waiting for message...")
-                data = await websocket.receive_json()
-                print(f"🔵 Received data: {data}")
-                
-                query = data.get('query')
-                print(f"🔵 Extracted query: {query}")
-                
-                if query:
-                    try:
-                        task_id = str(uuid.uuid4())
-                        print(f"🔵 Generated task_id: {task_id}")
-                        connections[task_id] = websocket
-                        print(f"🔵 Stored WebSocket connection for task_id: {task_id}")
-                        
-                        print("🔵 Creating background task")
-                        background_tasks = BackgroundTasks()
-                        background_tasks.add_task(
-                            search_video_sequences, 
-                            task_id,
-                            query, 
-                            pinecone_index, 
-                            connections
-                        )
-                        print("🔵 Added search task to background tasks")
-                        
-                        print("🔵 Executing background tasks")
-                        await background_tasks()
-                        print("🔵 Background tasks execution completed")
-                    except Exception as e:
-                        print(f"🔴 Error processing query: {str(e)}")
-                        print(f"🔴 Error type: {type(e)}")
-                        import traceback
-                        print(f"🔴 Traceback: {traceback.format_exc()}")
-                        await websocket.send_json({
-                            "error": str(e)
-                        })
-                else:
-                    print("🔴 No query in received data")
-                    await websocket.send_json({
-                        "error": "No query provided"
-                    })
-                    
-            except Exception as e:
-                print(f"🔴 Error receiving message: {str(e)}")
-                print(f"🔴 Error type: {type(e)}")
-                import traceback
-                print(f"🔴 Traceback: {traceback.format_exc()}")
-                break
-                
-    except WebSocketDisconnect:
-        print("🔵 WebSocket disconnected")
-    except Exception as e:
-        print(f"🔴 Unexpected error: {str(e)}")
-        print(f"🔴 Error type: {type(e)}")
-        import traceback
-        print(f"🔴 Traceback: {traceback.format_exc()}")
-    finally:
-        print("🔵 WebSocket connection handling complete")
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     print(f"🔴 Validation error details: {exc.errors()}")
@@ -384,21 +350,3 @@ async def startup_event():
             print(f"🟢 {route.methods} {route.path}")
         else:
             print(f"🟢 WebSocket {route.path}")
-
-@app.get("/debug/routes")
-async def debug_routes():
-    routes = []
-    for route in app.routes:
-        route_info = {
-            "path": route.path,
-            "name": route.name,
-            "methods": getattr(route, "methods", ["WebSocket"]) if not hasattr(route, "methods") else route.methods
-        }
-        routes.append(route_info)
-    return {"routes": routes}
-
-
-
-
-
-
