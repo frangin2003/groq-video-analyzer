@@ -24,6 +24,4 @@
 **/yarn-debug.log*
 **/yarn-error.log*
 
-videos/*
 video_samples/*
-**/frames/*
