@@ -1,11 +1,12 @@
-run = "python main.py"
+run = "/nix/store/zdba9frlxj2ba8ca095win3nphsiiqhb-python3-3.10.8/bin/python3 main.py"
 entrypoint = "main.py"
+modules = ["python-3.11"]
 
 [nix]
 channel = "stable-22_11"
 
 [deployment]
-run = ["sh", "-c", "python main.py"]
+run = ["sh", "-c", "/nix/store/zdba9frlxj2ba8ca095win3nphsiiqhb-python3-3.10.8/bin/python3 main.py"]
 deploymentTarget = "cloudrun"
 
 [[ports]]

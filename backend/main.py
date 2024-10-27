@@ -79,13 +79,10 @@ async def websocket_endpoint(
     task_id: str,
     token: str = Query(...)  # Get token from query params
 ):
-    # Verify token
-    if not token.startswith('Bearer '):
-        await websocket.close(code=4001)
-        return
+    print(f"Received token: {token}")  # Debug line
 
-    clean_token = token.replace('Bearer ', '')
-    if clean_token != "authenticated":
+    if token != "authenticated":
+        print("Invalid token")  # Debug line
         await websocket.close(code=4001)
         return
 

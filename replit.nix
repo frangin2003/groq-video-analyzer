@@ -1,27 +1,25 @@
 { pkgs }: {
-    deps = [
-      pkgs.xsimd
-      pkgs.pkg-config
-      pkgs.libxcrypt
-      pkgs.imagemagickBig
-      pkgs.ffmpeg-full
-      pkgs.libsndfile
-      pkgs.python310
-      pkgs.python310Packages.pip
-      pkgs.nodejs-18_x
-      pkgs.nodePackages.npm
-      pkgs.opencv4
+  deps = [
+    pkgs.python310
+    pkgs.ffmpeg
+    # Add system libraries
+    pkgs.stdenv.cc.cc.lib
+    pkgs.libstdc++
+    pkgs.gcc
+    # Add other potential required libraries
+    pkgs.zlib
+    pkgs.glib
+    pkgs.libsm6
+    pkgs.libxext6
+    pkgs.libxrender-dev
+    pkgs.libgcc-s1
+  ];
+  env = {
+    PYTHONBIN = "${pkgs.python310}/bin/python3.10";
+    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
       pkgs.stdenv.cc.cc.lib
-      pkgs.zlib
-      pkgs.glib
+      "${pkgs.lib.getLib pkgs.stdenv.cc.cc}/lib64"
     ];
-    env = {
-        PYTHONBIN = "${pkgs.python310}/bin/python3.10";
-        LANG = "en_US.UTF-8";
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-            pkgs.stdenv.cc.cc.lib
-            pkgs.zlib
-            pkgs.glib
-        ];
-    };
+    PYTHONPATH = "${pkgs.python310}/lib/python3.10/site-packages";
+  };
 }
