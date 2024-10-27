@@ -1,3 +1,6 @@
+torch --extra-index-url https://download.pytorch.org/whl/cpu
+transformers
+sentence-transformers
 fastapi
 uvicorn
 aiohttp
@@ -7,10 +10,6 @@ pinecone-client
 python-multipart
 python-dotenv
 groq
-transformers
-sentence-transformers
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
 numpy
 scipy
 soundfile
