@@ -93,6 +93,6 @@ To run the backend, run `uvicorn backend.main:app --host 0.0.0.0 --port 8000 --r
 https://commons.wikimedia.org/wiki/File:Steamboat_Willie_(1928)_by_Walt_Disney.webm
 https://commons.wikimedia.org/wiki/File:Why_Many_Cities_Suck_(but_Dutch_Cities_Don%27t).webm
 https://commons.wikimedia.org/wiki/File:San_Francisco_Downtown_Driving_Tour,_2023_California,_USA._Travel_Guide,_(4K_HDR).webm
-https://commons.wikimedia.org/wiki/https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm
+https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm
 https://commons.wikimedia.org/wiki/File:33_minutes_Paris,_France,_drone.webm
 https://commons.wikimedia.org/wiki/File:Aerial_views_of_World_Trade_Center,_Freedom_Tower,_Battery_Park_City,_Downtown_Manhattan,_Hudson_River,_Westside_Highway,_New_York_City,_USA.webm

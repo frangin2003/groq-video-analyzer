@@ -301,51 +301,107 @@ const App = () => {
           </button>
         </div>
 
-        <div id="upload-search" className="flex flex-col sm:flex-row justify-center mb-8 sm:mb-12 space-y-4 sm:space-y-0 sm:space-x-4">
-          {/* Drag & drop area */}
-          <div
-            {...getRootProps()}
-            className={`
-              flex items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer
-              transition-all duration-300 bg-gray-800 bg-opacity-50
-              ${isDragActive ? 'border-pink-500 bg-opacity-70' : 'border-purple-500'}
-              hover:border-pink-500 hover:bg-opacity-70
-              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
-            `}
-          >
-            <input {...getInputProps()} />
-            <div className="text-center">
-              <Upload className="mx-auto mb-2" size={24} />
-              <p className="text-lg font-semibold">
-                {isDragActive ? 'Drop the video here' : 'Drag & drop a video or click to select'}
-              </p>
-              <p className="text-sm text-gray-400 mt-1">Supported formats: MP4, AVI, MOV</p>
+        <div id="upload-search" className="flex flex-col space-y-4">
+          <div className="flex flex-col sm:flex-row justify-center mb-4 sm:mb-8 space-y-4 sm:space-y-0 sm:space-x-4">
+            {/* Drag & drop area */}
+            <div
+              {...getRootProps()}
+              className={`
+                flex items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer
+                transition-all duration-300 bg-gray-800 bg-opacity-50
+                ${isDragActive ? 'border-pink-500 bg-opacity-70' : 'border-purple-500'}
+                hover:border-pink-500 hover:bg-opacity-70
+                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
+                w-[300px]
+              `}
+            >
+              <input {...getInputProps()} />
+              <div className="text-center">
+                <Upload className="mx-auto mb-2" size={24} />
+                <p className="text-lg font-semibold">
+                  {isDragActive ? 'Drop the video here' : 'Drag & drop a video or click to select'}
+                </p>
+                <p className="text-sm text-gray-400 mt-1">Supported formats: MP4, AVI, MOV</p>
+              </div>
             </div>
-          </div>
 
-          {/* Search input */}
-          <div className="relative flex-grow max-w-2xl">
-            <div className="flex items-stretch">
-              <input
-                type="text"
-                className={`flex-grow p-3 pr-12 bg-gray-800 rounded-l-lg text-lg border-2 border-r-0 ${
-                  isInputFocused ? 'border-pink-500' : 'border-purple-600'
-                } focus:outline-none transition-all duration-300`}
-                placeholder="Search video sequences..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
-              />
-              <button
-                className={`px-3 bg-gray-800 rounded-r-lg text-purple-400 hover:text-pink-500 transition-colors duration-300 border-2 border-l-0 ${
-                  isInputFocused ? 'border-pink-500' : 'border-purple-600'
-                } focus:outline-none`}
-                onClick={handleSearch}
-              >
-                <Search size={24} />
-              </button>
+            {/* Search input and quick links container */}
+            <div className="flex-grow flex flex-col space-y-2 max-w-xl"> {/* Added max-w-xl to limit width */}
+              {/* Search input */}
+              <div className="flex items-stretch">
+                <input
+                  type="text"
+                  className={`flex-grow p-3 pr-12 bg-gray-800 rounded-l-lg text-lg border-2 border-r-0 ${
+                    isInputFocused ? 'border-pink-500' : 'border-purple-600'
+                  } focus:outline-none transition-all duration-300`}
+                  placeholder="Search video sequences..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                />
+                <button
+                  className={`px-3 bg-gray-800 rounded-r-lg text-purple-400 hover:text-pink-500 transition-colors duration-300 border-2 border-l-0 ${
+                    isInputFocused ? 'border-pink-500' : 'border-purple-600'
+                  } focus:outline-none`}
+                  onClick={handleSearch}
+                >
+                  <Search size={24} />
+                </button>
+              </div>
+              
+              {/* Quick action links */}
+              <div className="flex justify-center space-x-8">
+                <button
+                  onClick={() => {
+                    setSearchResults([{
+                      id: 'paris',
+                      hideExtract: true,
+                      video_path: '0f6fda2a-5cb0-445b-855e-7ff68f209785_paris_short.mp4',
+                      frame_start: 0,
+                      frame_end: 10,
+                      time_start: 0,
+                      time_end: 20,
+                      duration: 20,
+                      description: 'A drone shot of Paris. https://commons.wikimedia.org/wiki/File:33_minutes_Paris,_France,_drone.webm',
+                      frame_paths: ['frames/0f6fda2a-5cb0-445b-855e-7ff68f209785_frame_4.jpg']
+                    }, {
+                      id: 'cycling_denmark',
+                      hideExtract: true,
+                      video_path: '6bee1558-4097-4463-acdd-c3dcbc2c71cc_Dänemark_Teil_2_002.mp4',
+                      frame_start: 0,
+                      frame_end: 101,
+                      time_start: 0,
+                      time_end: 199,
+                      duration: 199,
+                      description: 'A cycling trip in Denmark (short). From SaftRAD Youtube channel. https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm',
+                      frame_paths: ['frames/6bee1558-4097-4463-acdd-c3dcbc2c71cc_frame_69.jpg']
+                    }, {
+                      id: 'steamboat_willie',
+                      hideExtract: true,
+                      video_path: 'e39d936f-5041-46b8-954a-beece034abf4_steamboat willie 001.mp4',
+                      frame_start: 0,
+                      frame_end: 69,
+                      time_start: 0,
+                      time_end: 136,
+                      duration: 136,
+                      description: 'The classic steamboat Willie (shortened). https://commons.wikimedia.org/wiki/File:Steamboat_Willie_(1928)_by_Walt_Disney.webm',
+                      frame_paths: ['frames/e39d936f-5041-46b8-954a-beece034abf4_frame_17.jpg']
+                    }]);
+                  }}
+                  className="text-purple-300 hover:text-pink-500 transition-colors duration-300 underline"
+                >
+                  List out all indexed videos
+                </button>
+                <a
+                  href="/video_sample_to_test/Paris_by_night.mp4"
+                  download
+                  className="text-purple-300 hover:text-pink-500 transition-colors duration-300 underline"
+                >
+                  Download sample to test
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -408,6 +464,7 @@ const App = () => {
                   <NeonButton 
                     className={`flex items-center justify-center ${isCompact ? 'text-sm py-1 px-2' : 'w-full'}`}
                     onClick={() => handleExtract(sequence)}
+                    hidden={sequence.hideExtract} // Add this line
                   >
                     <Video className="mr-2" size={isCompact ? 16 : 20} />
                     Extract Sequence

@@ -331,6 +331,7 @@ os.makedirs("videos", exist_ok=True)
 # Mount both directories as static file directories
 app.mount("/frames", StaticFiles(directory="frames"), name="frames")
 app.mount("/videos", StaticFiles(directory="videos"), name="videos")
+app.mount("/video_sample_to_test", StaticFiles(directory="video_sample_to_test"), name="video_sample_to_test")
 app.mount("/", StaticFiles(directory="./frontend/build", html=True), name="frontend")
 
 @app.exception_handler(RequestValidationError)

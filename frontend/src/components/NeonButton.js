@@ -1,12 +1,23 @@
-const NeonButton = ({ children, onClick, className = '' }) => (
+const NeonButton = ({ children, className = '', onClick, hidden = false }) => {
+  if (hidden) return null;
+  
+  return (
     <button
-      className={`bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg 
-                  shadow-[0_0_15px_rgba(147,51,234,0.5)] hover:shadow-[0_0_25px_rgba(147,51,234,0.8)] 
-                  transition-all duration-300 ${className}`}
       onClick={onClick}
+      className={`
+        bg-gradient-to-r from-purple-600 to-pink-600
+        hover:from-purple-500 hover:to-pink-500
+        text-white font-semibold
+        rounded-lg shadow-lg
+        transform transition-all duration-300
+        hover:scale-105 hover:shadow-xl
+        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
+        ${className}
+      `}
     >
       {children}
     </button>
   );
+};
 
 export default NeonButton;
