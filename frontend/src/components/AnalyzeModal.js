@@ -39,7 +39,7 @@ const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
 
         // Also add auth token to WebSocket connection
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/api/ws/${task_id}?token=${token}`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/api/ws/${task_id}?token=Bearer ${token}`;
 
         const ws = new WebSocket(wsUrl);
 

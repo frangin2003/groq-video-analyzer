@@ -7,3 +7,14 @@ channel = "stable-22_11"
 [deployment]
 run = ["sh", "-c", "python main.py"]
 deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8000
+
+[env]
+PYTHONPATH = "${PYTHONPATH}:${REPL_HOME}/.pythonlibs/lib/python3.10/site-packages"

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import uuid
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException, Request, Body, Form, Depends, status
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException, Request, Body, Form, Depends, status, Query
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
@@ -74,7 +74,21 @@ connections: Dict[str, WebSocket] = {}
 
 # WebSocket endpoint for progress updates
 @app.websocket("/api/ws/{task_id}")
-async def websocket_endpoint(websocket: WebSocket, task_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    task_id: str,
+    token: str = Query(...)  # Get token from query params
+):
+    # Verify token
+    if not token.startswith('Bearer '):
+        await websocket.close(code=4001)
+        return
+
+    clean_token = token.replace('Bearer ', '')
+    if clean_token != "authenticated":
+        await websocket.close(code=4001)
+        return
+
     await websocket.accept()
     connections[task_id] = websocket
     try:
