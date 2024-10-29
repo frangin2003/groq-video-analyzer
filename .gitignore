@@ -24,3 +24,5 @@ video_samples/*
 
 **/venv
 **/venv/**
+
+**/*.pyc

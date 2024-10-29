@@ -3,7 +3,10 @@ import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 def load_env():
     parser = argparse.ArgumentParser(description='Run the local server with environment configuration')
@@ -29,24 +32,59 @@ def load_env():
 # Load environment before any other imports
 load_env()
 
-# Now import the app after environment is set
-from backend.main import app
+# Create a new FastAPI app
+app = FastAPI()
 
-# Mount the frontend build directory
-app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Import routes from backend
+from backend.main import app as backend_app
+for route in backend_app.routes:
+    app.routes.append(route)
+
+# Explicit root handler
+@app.get("/")
+async def read_root():
+    return FileResponse("frontend/build/index.html")
+
+# Add debug endpoint
+@app.get("/debug")
+async def debug_info():
+    build_path = Path("frontend/build")
+    return {
+        "build_exists": build_path.exists(),
+        "files": [str(f) for f in build_path.rglob("*") if f.is_file()],
+        "static_exists": (build_path / "static").exists(),
+        "index_exists": (build_path / "index.html").exists()
+    }
+
+# Mount static files in correct order
+app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+app.mount("/frames", StaticFiles(directory="frames"), name="frames")
+app.mount("/videos", StaticFiles(directory="videos"), name="videos")
+app.mount("/video_sample_to_test", StaticFiles(directory="video_sample_to_test"), name="video_sample_to_test")
+# Mount the rest of the build directory for other assets
+app.mount("/", StaticFiles(directory="frontend/build"), name="frontend")
 
 if __name__ == "__main__":
-    # Use the PORT environment variable or fallback to 8000
     port = int(os.getenv("PORT", "8000"))
     
     print(f"Starting local server on port {port}")
     print(f"Local mode: {os.environ.get('LOCAL', 'false')}")
     
-    # Start the server
+    # Start the server with debug mode enabled
     uvicorn.run(
-        "backend.main:app",
+        "main_local:app",
         host="0.0.0.0",
         port=port,
         reload=True,
-        env_file=".env.local"
+        env_file=".env.local",
+        log_level="debug"
     )
