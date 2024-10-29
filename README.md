@@ -1,7 +1,7 @@
 # groq-video-analyzer
 Find and extract video sequences with just your words! 🎥✨
 
-This app allows you to scan folders and video files, automatically extracting frames from each file, describing them using generative AI, and storing them as embeddings in a local vector database. You can then perform natural language searches to find specific sequences across all indexed videos. A sequence is a subset of a video, and a video can contain none or many sequences corresponding to the search.
+This app allows you to analyze video files, automatically extracting frames eery 2 seconds, describing them using generative AI, and storing them as embeddings in a local vector database. You can then perform natural language searches to find specific sequences across all indexed videos. A sequence is a subset of a video, and a video can contain none or many sequences corresponding to the search.
 
 <ul>
 <li>📂 Scan folders and videos to extract frames, describe them with AI, and store them in a local database.</li>

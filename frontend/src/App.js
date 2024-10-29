@@ -359,38 +359,38 @@ const App = () => {
                 <button
                   onClick={() => {
                     setSearchResults([{
-                      id: 'paris',
+                      id: 'driving_sf',
                       hideExtract: true,
-                      video_path: '0f6fda2a-5cb0-445b-855e-7ff68f209785_paris_short.mp4',
+                      video_path: '17b04840-a5cc-42ce-a199-2d7b218bd0df_sf_driving.mp4',
                       frame_start: 0,
                       frame_end: 10,
                       time_start: 0,
                       time_end: 20,
                       duration: 20,
-                      description: 'A drone shot of Paris. https://commons.wikimedia.org/wiki/File:33_minutes_Paris,_France,_drone.webm',
-                      frame_paths: ['frames/0f6fda2a-5cb0-445b-855e-7ff68f209785_frame_4.jpg']
+                      description: 'Driving downtown San Francisco. https://commons.wikimedia.org/wiki/File:San_Francisco_Downtown_Driving_Tour,_2023_California,_USA._Travel_Guide,_(4K_HDR).webm',
+                      frame_paths: ['frames/17b04840-a5cc-42ce-a199-2d7b218bd0df_frame_3.jpg']
                     }, {
                       id: 'cycling_denmark',
                       hideExtract: true,
-                      video_path: '6bee1558-4097-4463-acdd-c3dcbc2c71cc_Dänemark_Teil_2_002.mp4',
+                      video_path: 'f8261bd9-e0eb-4e0f-8b72-406ff768f0c9_Dänemark_Teil_2_002.mp4',
                       frame_start: 0,
                       frame_end: 101,
                       time_start: 0,
                       time_end: 199,
                       duration: 199,
                       description: 'A cycling trip in Denmark (short). From SaftRAD Youtube channel. https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm',
-                      frame_paths: ['frames/6bee1558-4097-4463-acdd-c3dcbc2c71cc_frame_69.jpg']
+                      frame_paths: ['frames/f8261bd9-e0eb-4e0f-8b72-406ff768f0c9_frame_48.jpg']
                     }, {
                       id: 'steamboat_willie',
                       hideExtract: true,
-                      video_path: 'e39d936f-5041-46b8-954a-beece034abf4_steamboat willie 001.mp4',
+                      video_path: '290d6e36-ff74-4e66-8701-0b026ff86563_steamboat willie 001.mp4',
                       frame_start: 0,
                       frame_end: 69,
                       time_start: 0,
                       time_end: 136,
                       duration: 136,
                       description: 'The classic steamboat Willie (shortened). https://commons.wikimedia.org/wiki/File:Steamboat_Willie_(1928)_by_Walt_Disney.webm',
-                      frame_paths: ['frames/e39d936f-5041-46b8-954a-beece034abf4_frame_17.jpg']
+                      frame_paths: ['frames/290d6e36-ff74-4e66-8701-0b026ff86563_frame_19.jpg']
                     }]);
                   }}
                   className="text-purple-300 hover:text-pink-500 transition-colors duration-300 underline"

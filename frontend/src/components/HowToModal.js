@@ -15,7 +15,7 @@ const HowToModal = ({ isOpen, onClose }) => {
             <li>🎬 Extract and utilize video sequences based on your search results.</li>
           </ul>
           <p className="text-gray-300">
-            This app allows you to scan folders and video files, automatically extracting frames from each file, describing them using generative AI, and storing them as embeddings in a local vector database. You can then perform natural language searches to find specific sequences across all indexed videos. A sequence is a subset of a video, and a video can contain none or many sequences corresponding to the search.
+            This app allows you to analyze video files, automatically extracting frames eery 2 seconds, describing them using generative AI, and storing them as embeddings in a local vector database. You can then perform natural language searches to find specific sequences across all indexed videos. A sequence is a subset of a video, and a video can contain none or many sequences corresponding to the search.
           </p>
         </div>
       </div>
