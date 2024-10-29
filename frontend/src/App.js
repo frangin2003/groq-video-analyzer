@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Upload, Video, Clock, Film } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import VideoPreview from './components/VideoPreview';
@@ -7,15 +7,14 @@ import VideoPlaybackModal from './components/VideoPlaybackModal';
 import ResultViewsSwitch from './components/ResultViewsSwitch';
 import HowToModal from './components/HowToModal';
 import NeonButton from './components/NeonButton';
+import { getAuthHeaders } from './utils/auth';
 
 const searchVideoSequences = async (query) => {
   try {
     console.log("🟡 Making API call to search sequences...");
     const response = await fetch(`/api/search_video_sequences/${encodeURIComponent(query)}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -81,6 +80,7 @@ const LoadingComponent = () => {
 };
 
 const App = () => {
+  const isLocal = process.env.REACT_APP_LOCAL === 'true';
   const [videoFile, setVideoFile] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -90,7 +90,7 @@ const App = () => {
   const [playbackVideo, setPlaybackVideo] = useState(null);
   const [isHowToModalOpen, setIsHowToModalOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(isLocal);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -245,7 +245,8 @@ const App = () => {
         const response = await fetch(
             `/api/extract_sequence?${params.toString()}`,
             {
-                method: 'GET'
+                method: 'GET',
+                headers: getAuthHeaders(),
             }
         );
 
@@ -282,13 +283,15 @@ const App = () => {
             <h1 className="text-4xl sm:text-5xl font-bold neon-title mr-2.5">
               SequenceFinder
             </h1>
-            <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="mt-2">
-              <img
-                src="https://groq.com/wp-content/uploads/2024/03/PBG-mark1-color.svg"
-                alt="Powered by Groq for fast inference."
-                className="h-12"
-              />
-            </a>
+            {!process.env.REACT_APP_LOCAL && (
+              <a href="https://groq.com" target="_blank" rel="noopener noreferrer" className="mt-2">
+                <img
+                  src="https://groq.com/wp-content/uploads/2024/03/PBG-mark1-color.svg"
+                  alt="Powered by Groq for fast inference."
+                  className="h-12"
+                />
+              </a>
+            )}
           </div>
           <h2 className="text-xl sm:text-2xl font-semibold text-center flex-grow whitespace-nowrap overflow-hidden text-ellipsis">
             Find and extract video sequences with just your words!

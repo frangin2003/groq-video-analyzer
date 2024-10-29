@@ -1,5 +1,5 @@
 # groq-video-analyzer
-Find and extract video sequences with just your words!
+Find and extract video sequences with just your words! 🎥✨
 
 This app allows you to scan folders and video files, automatically extracting frames from each file, describing them using generative AI, and storing them as embeddings in a local vector database. You can then perform natural language searches to find specific sequences across all indexed videos. A sequence is a subset of a video, and a video can contain none or many sequences corresponding to the search.
 
@@ -9,90 +9,109 @@ This app allows you to scan folders and video files, automatically extracting fr
 <li>🎬 Extract and utilize video sequences based on your search results.</li>
 </ul>
 
-# Stack
-TypeScript, JavaScript, React, TailwindCSS, FastAPI, Groq, Pinecone, Replit
+## Local Installation Steps 🚀
 
-# Getting Started with Create React App
+### Prerequisites 📋
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+1. **Ollama** 🦙
+   - Download and install Ollama from the official repository: [Ollama Download](https://ollama.com/download) 📥
 
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+2. **Conda (that will install Python)** 🐍
+   - Download and install Conda from the official website: [Conda Installation Guide](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) 📥
 
 
-## Backend
+3. **Node.js and npm** 🌐
+   - You need to install Node.js and npm to install dependencies. Download and install Node.js from the official website: [Node.js Download](https://nodejs.org/en/download/package-manager) 📥
+   - Verify the installation by running:
+     ```sh
+     node -v
+     npm -v
+     ```
+### Commands/Steps 🛠️
+
+1. **Run Ollama Models (Only first time to download the models)** 🦙
+   - Run the Ollama LLaVa model (vision LLM for image description generation):
+     ```sh
+     ollama run llava
+     ```
+     Then `/bye` to exit 👋
+   - Pull the mxbai-embed-large model (for embedding frames):
+     ```sh
+     ollama pull mxbai-embed-large
+     ```
+     Then `/bye` to exit 👋
+
+
+2. **Install (and eventually build) the Frontend** 🏗️
+   - Navigate to the frontend directory:
+     ```sh
+     cd frontend
+     ```
+   - Install the required npm packages:
+     ```sh
+     npm install
+     ```
+   - Build the frontend for production (Optional since the build is already included in the repo):
+     ```sh
+     npm run build
+     ```
+   - The build output will be in the `build` folder.
+
+3. **Create Conda Environment** 🐍
+   - Create a new Conda environment for Python 3.10 named `groq-video-analyzer` (only first time):
+     ```sh
+     conda create -n groq-video-analyzer python=3.10
+     ```
+   - Activate the environment:
+     ```sh
+     conda activate groq-video-analyzer
+     ```
+
+4. **Install Python Requirements** 📦
+   - Install the required Python packages (only first time):
+     ```sh
+     pip install -r requirements.txt
+     ```
+
+5. **Start the Application** ▶️
+   - Run the following command to start the application:
+     ```sh
+     python main_local.py
+     ```
+
+6. **Access the Application** 🌐
+   - Open your web browser and navigate to:
+     [http://localhost:8000/](http://localhost:8000/)
+
+
+# 🗂️ Stack
+## 🌐 Replit Stack
+🟦 JavaScript, ⚛️ React, 🎨 TailwindCSS, 🚀 FastAPI, 🐍 Python, 🌟 Uvicorn, 🧠 Groq, 🌲 Pinecone, 🌀 Replit
+
+## 🖥️ Local Stack
+🟦 JavaScript, ⚛️ React, 🎨 TailwindCSS, 🚀 FastAPI, 🐍 Python, 🌟 Uvicorn, 🧠 Ollama, 🦙 Llama3.2, 🦙 Llava1.6
+
+# 🛠️ Development
+
+## 🦙 Ollama
+📚 Ollama API docs: https://github.com/ollama/ollama/blob/main/docs/api.md
+
+- List available models: `http://localhost:11434/api/tags`
+- List running models: `http://localhost:11434/api/ps`
+
+## React commands
+- ▶️ Start: `npm start`
+- 🏗️ Build: `npm run build` (Builds the app for production to the `build` folder)
+
+## Python Backend
 
 To run the backend, run `uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload` at the root directory.
 
-
-## Video Attributions
-https://commons.wikimedia.org/wiki/File:Steamboat_Willie_(1928)_by_Walt_Disney.webm
-https://commons.wikimedia.org/wiki/File:Why_Many_Cities_Suck_(but_Dutch_Cities_Don%27t).webm
-https://commons.wikimedia.org/wiki/File:San_Francisco_Downtown_Driving_Tour,_2023_California,_USA._Travel_Guide,_(4K_HDR).webm
-https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm
-https://commons.wikimedia.org/wiki/File:33_minutes_Paris,_France,_drone.webm
-https://commons.wikimedia.org/wiki/File:Aerial_views_of_World_Trade_Center,_Freedom_Tower,_Battery_Park_City,_Downtown_Manhattan,_Hudson_River,_Westside_Highway,_New_York_City,_USA.webm
+# Credits
+## 🎥 Video Attributions
+- https://commons.wikimedia.org/wiki/File:Steamboat_Willie_(1928)_by_Walt_Disney.webm
+- https://commons.wikimedia.org/wiki/File:Why_Many_Cities_Suck_(but_Dutch_Cities_Don%27t).webm
+- https://commons.wikimedia.org/wiki/File:San_Francisco_Downtown_Driving_Tour,_2023_California,_USA._Travel_Guide,_(4K_HDR).webm
+- https://commons.wikimedia.org/wiki/File:D%C3%A4nemark_Teil_2_-_mit_dem_E-Bike_nach_Kopenhagen_-_Puttgarden_-_Faxe.webm
+- https://commons.wikimedia.org/wiki/File:33_minutes_Paris,_France,_drone.webm
+- https://commons.wikimedia.org/wiki/File:Aerial_views_of_World_Trade_Center,_Freedom_Tower,_Battery_Park_City,_Downtown_Manhattan,_Hudson_River,_Westside_Highway,_New_York_City,_USA.webm

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 import SuccessIcon from './SuccessIcon';
+import { getAuthHeaders, getWebSocketUrl } from '../utils/auth';
 
 const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
   const [analyzeProgress, setAnalyzeProgress] = useState(0);
@@ -20,14 +21,10 @@ const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
       formData.append('file', videoFile);
 
       try {
-        // Get the auth token from localStorage
-        const token = localStorage.getItem('auth_token');
-        
+        // Upload request
         const response = await fetch('/api/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,  // Add the auth token
-          },
+          headers: getAuthHeaders(),
           body: formData,
         });
 
@@ -37,11 +34,8 @@ const AnalyzeModal = ({ isOpen, onClose, videoFile }) => {
 
         const { task_id } = await response.json();
 
-        // Also add auth token to WebSocket connection
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/api/ws/${task_id}?token=${token}`;
-
-        const ws = new WebSocket(wsUrl);
+        // WebSocket connection
+        const ws = new WebSocket(getWebSocketUrl(task_id));
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
